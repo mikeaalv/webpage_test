@@ -1,0 +1,166 @@
+---
+title: "stat6280"
+author: yue wu
+date: 01 19, 2018
+output:
+  html_document: #ioslides_presentation
+    toc: true
+    toc_depth: 3
+params:
+  n: 100
+---
+
+```{r setup, include=FALSE}
+#eval=FALSE echo=FALSE include=FALSE
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1.
+
+(1). $$E(aX+b)=\int (aX+b) f(X) dX=a (\int X f(X) dX) + b=a E(X) + b$$
+
+   (2).
+   $$
+   \begin{aligned}
+   Cov(aX+Z,bY) &=E((aX+Z-aE(X)-E(Z))(bY-bE(Y)))\\
+   &=E(abXY-abXE(Y)+bYZ-bZE(Y)-abE(X)Y+abE(X)E(Y)-bYE(Z)+bE(Y)E(Z))\\
+   &=abE(XY)-abE(X)E(Y)+bE(YZ)-bE(Y)E(Z)-abE(X)E(Y)+abE(X)E(Y)-bE(Z)E(Y)+bE(Z)E(Y) \\
+   &=abE(XY)-abE(X)E(Y)+bE(YZ)-bE(Y)E(Z) \\
+   &=ab Cov(X,Y) + bCov(Z,Y)
+   \end{aligned}
+   $$
+
+   (3).
+   $$
+   \begin{aligned}
+   Var(aX+bY) &=Cov(aX+bY,aX+bY) \\
+   &=a^2 Cov(X,X)+b^2 Cov(Y,Y)+2ab Cov(X,Y) \\
+   &=a^2 Var(X)+b^2 Var(Y)+2ab Cov(X,Y)
+   \end{aligned}
+   $$
+
+2.
+
+   $\gamma_X(3)=0.7$
+   $Cov(X_t,X_{t \pm 3})=0.7$ the covariance between $X_t$ and $X_s$ with $|lag|=3$ is 0.7
+
+   $\phi_{33}=0$
+   $Corr(X_t,X_{t - 3}|X_{t-1},X_{t-2})=0$
+   hold $X_{t-1}$ and $X_{t-2}$ constant, the correlation between $X_t$ and $X_{t-3}$ is 0
+
+3.
+
+   $X_t=Z_t+0.3Z_{t-1}-0.4Z_{t-2}$ $Z_t \sim^{iid} N(0,\sigma^2)$
+
+   $E(X_t)=E(Z_t)+0.3E(Z_{t-1})-0.4E(Z_{t-2})=0$
+    The expectation of $X_t$ is constant.
+
+   $$
+   \begin{aligned}
+   Cov(X_t,X_{t-k})&=Cov(Z_t+0.3Z_{t-1}-0.4Z_{t-2},Z_{t-k}+0.3Z_{t-1-k}-0.4Z_{t-2-k}) \\
+   &=Cov(Z_t,Z_{t-k})+0.3Cov(Z_t,Z_{t-k-1})-0.4Cov(Z_t,Z_{t-k-2})+0.3Cov(Z_{t-1},Z_{t-k})+0.09Cov(Z_{t-1},Z_{t-k-1})-0.12Cov(Z_{t-1},Z_{t-k-2})-0.4Cov(Z_{t-2},Z_{t-k})-0.12Cov(Z_{t-2},Z_{t-k-1})+0.16Cov(Z_{t-2},Z_{t-k-2})
+   \end{aligned}
+   $$
+
+   $$
+   \begin{aligned}
+   &k=0, Cov(X_t,X_{t-k})=1+0.09+0.16=1.25\\
+   &k=\pm1, Cov(X_t,X_{t-k})=0.3-0.12=0.18\\
+   &k=\pm2, Cov(X_t,X_{t-k})= -0.4\\
+   &|k|>2, Cov(X_t,X_{t-k})=0
+   \end{aligned}
+   $$
+
+   The covariance only depends on lag.
+
+   $Z_t$ is stationary
+
+4.
+
+    White noise plot
+
+
+    ```{r noisegen}
+    n=200
+    set.seed(1)
+    x=rnorm(n,mean=0,sd=2)
+    ts.plot(x,main="White Noise,sigma=2")
+    par(mfrow=c(1,2),pty='s')
+    acf(x)
+    pacf(x)
+    ```
+
+    Except lag=0, there is no significant ACF and PACF. There is little auto-correlation (dependency) between different time points.
+
+5.
+
+    random walk plot
+
+    ```{r rwgen}
+    n=500
+    inival=-2
+    sigma=0.5
+    gen.rw<-function(n,init,sigma) {
+      x0=init
+      rnum=rnorm(n,sd=sigma)
+      X=cumsum(c(x0,rnum))[-1]
+      return(X)
+    }
+    set.seed(1)
+    x=gen.rw(n,inival,sigma)
+    ts.plot(x,main= "Random Walk sigma 0.5")
+    par(mfrow=c(1,2),pty='s')
+    acf(x)
+    pacf(x)
+    ```
+
+    There are significant ACF for the shown lag range and it is decreasing slowly. There is significant auto-correlation for the lag range shown.
+
+    Except the first PACF(lag=1), there is no significant PACF. Hold $X_{t-1}$ constant, $X_t$ is not significantly correlated with $X_{t-k} \ k>1$.
+
+6.
+
+  The dataset "Monthly milk production: pounds per cow. Jan 62 – Dec 75" is used
+
+   (a).
+
+   The dataset contains monthly milk production (pounds) per cow from January 1962 to December 1975.
+
+   (b).
+
+   The first six data points are:
+   ```{r loaddata}
+      tab=read.table("/Users/mikeaalv/Library/Mobile Documents/com~apple~CloudDocs/working/course/stat6280/monthly-milk-production-pounds-p.tsv.csv",sep="\t",header=TRUE)
+      tab[1:6,2]
+   ```
+
+   (The last three line was manually deleted before running the R code.)
+
+   (c).
+
+   The length of the time series is:
+   ```{r lendata}
+      dim(tab)[1]
+   ```
+
+   (d).
+
+   ```{r plotdata}
+      ts.plot(tab[,2],main= "Monthly milk production")
+   ```
+
+   The mean of the time series is changing through time: increasing and then keep comparablly stable. The variance of the data seems to be constant. The dataset has strong seasonality and comparablly low noise.
+
+   The time series is not stationary as mean depends on time.
+
+   (e).
+
+   ```{r cfdata}
+   par(mfrow=c(1,2),pty='s')
+   acf(x)
+   pacf(x)
+   ```
+
+   There is significant ACF for the shown lag range. There is significant auto-correlation between $X_t$ and $X_{t-k}$ for small k
+
+   There are only significant PACF for lag=1. Keep the $X_{t-1}$ constant, $X_{t}$ is not correlated with $X_{t-k} \ k > 1$
